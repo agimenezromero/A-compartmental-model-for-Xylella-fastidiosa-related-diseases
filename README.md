@@ -275,7 +275,7 @@ A more complete and self-contained example can be found in the [Examples folder]
 
 ## Control strategies
 
-We can test disease control strategies acting on the vector population using our model. Here we test the performance of two different strategies: reducing the number of annualy emergent adults in the fields (lowering N_v(0)), that could be achieved via egg and nymphal control; and increasing the rate at which adults exit the field (increasing μ), which could be achieved with mechanical or chemical actions. To do so we only need to simulate our model with different values of N_v(0) and μ and compare the results of a given epidemiological quantity of interest, such as the basic reproductive number or the final number of dead hosts.
+We can test disease control strategies acting on the vector population using our model. Here we test the performance of two different strategies: reducing the number of annualy emergent adults in the fields (lowering N_v(0)), that could be achieved via egg and nymph control; and increasing the rate at which adults exit the field (increasing μ), which could be achieved with mechanical or chemical actions. To do so we only need to simulate our model with different values of N_v(0) and μ and compare the results of a given epidemiological quantity of interest, such as the basic reproductive number or the final number of dead hosts.
 
 ```julia
 β = 0.019964629210535656
