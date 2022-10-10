@@ -324,6 +324,7 @@ j = 0
     
 end
 ```
+A more complete and self-contained example can be found in the [Examples folder](https://github.com/agimenezromero/A-compartmental-model-for-Xylella-fastidiosa-related-diseases/tree/main/Examples)
 
 # Authors
 
