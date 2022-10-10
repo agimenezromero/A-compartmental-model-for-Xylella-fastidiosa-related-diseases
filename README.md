@@ -271,6 +271,7 @@ A,B = QuasiMonteCarlo.generate_design_matrices(N, lb, ub, sampler)
 #Perform the global sensitivity analysis with the Sobol method
 sobol_result = @time gsa(f1, Sobol(order=[0, 1, 2]), A, B);
 ```
+A more complete and self-contained example can be found in the [Examples folder](https://github.com/agimenezromero/A-compartmental-model-for-Xylella-fastidiosa-related-diseases/tree/main/Examples)
 
 ## Control strategies
 
