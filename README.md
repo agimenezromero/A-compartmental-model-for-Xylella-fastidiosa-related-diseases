@@ -276,4 +276,6 @@ sobol_result = @time gsa(f1, Sobol(order=[0, 1, 2]), A, B);
 
 # Authors
 
+* Âlex Giménez-Romero
+
 # License
