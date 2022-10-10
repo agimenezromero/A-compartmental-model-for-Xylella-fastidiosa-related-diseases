@@ -323,40 +323,6 @@ j = 0
     end
     
 end
-
-Nvs_mesh, mus_mesh = meshgrid(Nvs, mus)
-
-idxs_matrix = zeros((length(Nvs), length(mus), 2))
-
-for i in 1:length(Nvs)
-    
-    for j in 1:length(mus)
-   
-        idxs_matrix[i, j, :] = [i, j]
-        
-    end
-    
-end
-
-xs_DF = idxs_matrix[:, :, 1][R_infs .< 0.03] 
-ys_DF = idxs_matrix[:, :, 2][R_infs .< 0.03]
-
-ϵ_μ = 0.002
-ϵ_Nv = 10000
-
-x_current = idxs_matrix[:, :, 1][(mus_mesh .< μ + ϵ_μ) .& (mus_mesh .> μ - ϵ_μ) .& 
-                                 (Nvs_mesh .< 786388.5 + ϵ_Nv) .& (Nvs_mesh .> 786388.5 - ϵ_Nv)]
-
-y_current = idxs_matrix[:, :, 2][(mus_mesh .< μ + ϵ_μ) .& (mus_mesh .> μ - ϵ_μ) .& 
-                                 (Nvs_mesh .< 786388.5 + ϵ_Nv) .& (Nvs_mesh .> 786388.5 - ϵ_Nv)]
-
-distances = @. sqrt((xs_DF - x_current)^2 + (ys_DF - y_current)^2)
-
-x_min = Int(xs_DF[argmin(distances)])
-y_min = Int(ys_DF[argmin(distances)])
-
-mus_R0s_1 = mus_mesh[(R0s .< 1.1) .& (R0s .> 0.9)]
-Nvs_R0s_1 = Nvs_mesh[(R0s .< 1.1) .& (R0s .> 0.9)];
 ```
 
 # Authors
