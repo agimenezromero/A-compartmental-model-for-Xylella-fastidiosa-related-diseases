@@ -9,8 +9,7 @@ Table of contents
    * [Abstract](#abstract)
    * [Requirements](#requirements)
    * [Documentation and examples](#documentation-and-examples)
-       - [Model definition](#model-definition)
-       - [Simulation](#simulation)
+       - [Model definition](#model-definition-and-simulation)
        - [Bayesian inference](#bayesian-inference)
        - [Sensitivity analysis](#sensitivity-analysis)
        - [Control strategies](#control-strategies)
@@ -40,9 +39,55 @@ Julia v 1.x installed with the following libraries:
 
 # Documentation and examples
 
-## Model definition
+## Model definition and simulation
 
-## Simulation
+* Model definition
+
+```julia
+# Model of differential equations compatible with DifferentialEquations.jl
+function SEIR_v!(du, u, p, t)
+    
+    S, E, I, R, Sv, Iv = u #functions
+    
+    β, κ, γ, α, μ, N = p #parameters
+    
+    #Differential equations defining the model
+    du[1] = dS = -β*S*Iv/N
+    du[2] = dE = β*S*Iv/N - κ*E
+    du[3] = dI = κ*E - γ*I
+    du[4] = dR = γ*I
+    
+    du[5] = dSv = -α*Sv*I/N - μ*Sv
+    du[6] = dIv = α*Sv*I/N - μ*Iv
+    
+end
+```
+
+* Simulation
+
+```julia
+
+#Integrate parameters and initial conditions to use within DifferentialEquations.jl
+initial_conditions = [S0, E0, I0, R0, Sv0, Iv0]
+
+parameters = [β, κ, γ, α, μ, N]
+
+time = (0.0, t)
+
+#Define the source term δ(t-t*)N_v(0)
+affect!(integrator) = integrator.u[5] = Nv #Select to which differential equation the source term will apply
+dosetimes = [365.0 * i for i in 1 : N_years]  #Select when the source term will aply
+
+cb = PresetTimeCallback(dosetimes, affect!) #Finally define the source term
+
+#Define problem in DifferentialEquations.jl
+prob = ODEProblem(SEIR_v!, initial_conditions, time, parameters)
+
+#Solve the problem
+sol = solve(prob, RK4(), adaptative=false, dt=5e-2, saveat=1, callback=cb)
+```
+
+A more complete and self-contained example can be found in the [Examples folder](https://github.com/agimenezromero/A-compartmental-model-for-Xylella-fastidiosa-related-diseases/tree/main/Examples)
 
 ## Bayesian inference
 
