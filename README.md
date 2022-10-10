@@ -274,6 +274,91 @@ sobol_result = @time gsa(f1, Sobol(order=[0, 1, 2]), A, B);
 
 ## Control strategies
 
+We can test disease control strategies acting on the vector population using our model. Here we test the performance of two different strategies: reducing the number of annualy emergent adults in the fields (lowering N_v(0)), that could be achieved via egg and nymphal control; and increasing the rate at which adults exit the field (increasing μ), which could be achieved with mechanical or chemical actions. To do so we only need to simulate our model with different values of N_v(0) and μ and compare the results of a given epidemiological quantity of interest, such as the basic reproductive number or the final number of dead hosts.
+
+```julia
+β = 0.019964629210535656
+κ = (1/4.468534327936427) / 365
+γ = (1/13.816202329656981) / (365)
+α = 0.0864354643995437 
+μ = 0.02209272187095225 
+
+N = 19417*81
+
+E0 = 0
+I0 = 0.01 * N
+S0 = N - I0
+R0 = 0
+
+Iv0 = 0
+
+τ = 365
+
+Nvs = [10^i for i in 4.3 : 0.05 : 6.3]
+
+mus = [10^i for i in -2 : 0.05 : 0]
+
+R_infs = zeros((length(Nvs), length(mus)))
+
+R0s = zeros((length(Nvs), length(mus)))
+
+i = 0
+j = 0
+
+@time @inbounds for Nv in Nvs
+    
+    i += 1
+    j = 0
+    
+    for µ in mus
+        
+        j += 1
+
+        S, E, I, R, Sv, Iv = single_run(β, κ, γ, α, μ, N, Nv)
+
+        R_infs[i,j] = R[end]/N
+        
+        R0s[i,j] = R_0(β, α, κ, γ, μ, N, Nv, S0, τ)
+        
+    end
+    
+end
+
+Nvs_mesh, mus_mesh = meshgrid(Nvs, mus)
+
+idxs_matrix = zeros((length(Nvs), length(mus), 2))
+
+for i in 1:length(Nvs)
+    
+    for j in 1:length(mus)
+   
+        idxs_matrix[i, j, :] = [i, j]
+        
+    end
+    
+end
+
+xs_DF = idxs_matrix[:, :, 1][R_infs .< 0.03] 
+ys_DF = idxs_matrix[:, :, 2][R_infs .< 0.03]
+
+ϵ_μ = 0.002
+ϵ_Nv = 10000
+
+x_current = idxs_matrix[:, :, 1][(mus_mesh .< μ + ϵ_μ) .& (mus_mesh .> μ - ϵ_μ) .& 
+                                 (Nvs_mesh .< 786388.5 + ϵ_Nv) .& (Nvs_mesh .> 786388.5 - ϵ_Nv)]
+
+y_current = idxs_matrix[:, :, 2][(mus_mesh .< μ + ϵ_μ) .& (mus_mesh .> μ - ϵ_μ) .& 
+                                 (Nvs_mesh .< 786388.5 + ϵ_Nv) .& (Nvs_mesh .> 786388.5 - ϵ_Nv)]
+
+distances = @. sqrt((xs_DF - x_current)^2 + (ys_DF - y_current)^2)
+
+x_min = Int(xs_DF[argmin(distances)])
+y_min = Int(ys_DF[argmin(distances)])
+
+mus_R0s_1 = mus_mesh[(R0s .< 1.1) .& (R0s .> 0.9)]
+Nvs_R0s_1 = Nvs_mesh[(R0s .< 1.1) .& (R0s .> 0.9)];
+```
+
 # Authors
 
 * Àlex Giménez-Romero
