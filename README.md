@@ -91,6 +91,109 @@ A more complete and self-contained example can be found in the [Examples folder]
 
 ## Bayesian inference
 
+We infer the parameters of our model that best fit the data using a Bayesian framework. To do so, we first need to load the data
+
+```julia
+#For this example, we load the data from the OQDS outbreak in Apulia
+df = DataFrame(CSV.File("Data/OQDS_data.csv"))
+
+#This is the time corresponding to the datapoints
+t_exp = collect(4:1:10)
+
+#Use the sum of S+E (S_E) I+R (I_R) compartments
+df[!, "I_R"] = df[!, "I"] .+ df[!, "R"]
+
+#Define the data to be fitted
+fit_data = Float64.(Array(df[!, ["S_E", "I_R"]])[5:end-2, :]);
+```
+
+Then, we define the probabilistic model using Turing.jl
+
+```julia
+#Define fixed initial conditions
+N_years = 12
+
+#The number of hosts is known, we assume 1 vector per 2 hosts.
+N = 2959
+Nv = 2959 * 0.5
+
+t = 365 * N_years
+
+E0 = 0.006 * N #Initial condition comes from White et al work.
+I0 = 0.0
+S0 = N - I0
+R0 = 0
+
+Sv0 = Nv
+Iv0 = 0
+
+initial_conditions = [S0, E0, I0, R0, Sv0, Iv0]
+
+time = (0.0, t)
+
+prob1 = ODEProblem(SEIR_v!, initial_conditions, time, parameters)
+
+#Iterations in which to compare model with data points
+index_sol = [1461, 1826, 2191, 2556, 2921, 3286, 3651]
+
+@model function fitlv(data, prob1)
+    
+    dosetimes = [365.0 * i for i in 1 : N_years]
+
+    affect!(integrator) = integrator.u[5] = Nv
+
+    cb = PresetTimeCallback(dosetimes,affect!)
+        
+    τ_I ~ Truncated(Normal(3.5, 1), 0.01, 10)
+    τ_E ~ Truncated(Normal(1.75, 0.5), 0.1, 4)
+    
+    β ~ Uniform(1e-2, 1e1)
+    α ~ Uniform(1e-5, 1e-2)
+
+    μ ~ Truncated(Normal(0.02, 0.0075), 0.01, 0.04) #0.02 #~ Uniform(0.02, 0.04)
+    
+    σ ~ InverseGamma(10, 1)
+    
+    γ = (1.0 ./ τ_I) ./ 365.0
+    κ = (1.0 ./ τ_E) ./ 365.0
+    
+    p = [β, κ, γ, α, μ, N]
+    
+    prob = remake(prob1, p=p)
+    
+    predicted = solve(prob, RK4(), adaptative=false, dt=1e-1, saveat=1, maxiters=10^9, callback=cb)
+    
+    S, E, I, R, Sv, Iv = get_vars(predicted)
+    
+    S_E_fit = (S .+ E) ./ N
+    I_R_fit = (I .+ R) ./ N
+    
+    affected = hcat(S_E_fit, I_R_fit)
+    
+    for i in 1 : size(data)[1]
+    
+        data[i, :] ~ MvNormal(affected[index_sol[i], :], σ)
+        
+    end
+        
+end
+
+#Define the model to be optimized through Bayesian inference
+model = fitlv(fit_data, prob1)
+```
+
+and finally we optimize the model
+
+```julia
+#Set some initial values for the parameters
+params = [3.5, 1.0, 1, 1e-3, 0.02, 0.0725]
+
+#Infer the parameters using 1 Markov Chain MonteCarlo (MCMC)
+@time chain = mapreduce(c -> sample(model, NUTS(.65), 10^3, init_params = params), chainscat, 1)
+```
+
+A more complete and self-contained example can be found in the [Examples folder](https://github.com/agimenezromero/A-compartmental-model-for-Xylella-fastidiosa-related-diseases/tree/main/Examples)
+
 ## Sensitivity analysis
 
 ## Control strategies
