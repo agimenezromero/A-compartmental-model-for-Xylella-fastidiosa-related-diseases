@@ -196,6 +196,82 @@ A more complete and self-contained example can be found in the [Examples folder]
 
 ## Sensitivity analysis
 
+To perform the sensitivity analysis we can use the DiffEqSensitivity package (or the new version GlobalSensitivity.jl inside the SciML.jl framework). It can be easily implemented in two steps:
+
+1. Define the model
+
+```julia
+#Select some reasonable initial values for the parameters
+β = 0.019964629210535656
+κ = (1/4.468534327936427) / 365
+γ = (1/13.816202329656981) / (365)
+α = 0.0864354643995437 
+μ = 0.02209272187095225 
+
+#Set the initial conditions
+N = 19417*81
+Nv = 19417*81 * 0.5
+
+E0 = 0
+I0 = 0.01 * N
+S0 = N - I0
+R0 = 0
+
+Sv0 = Nv
+Iv0 = 0
+
+#Set the simulation time
+N_years = 50
+
+t = 365 * N_years
+
+#Define the model in DifferentialEquations.jl
+initial_conditions = [S0, E0, I0, R0, Sv0, Iv0]
+
+parameters = [β, κ, γ, α, μ, N]
+
+time = (0.0, t)
+
+dosetimes = [365.0 * i for i in 1 : N_years]
+
+affect!(integrator) = integrator.u[5] = Nv
+
+cb = PresetTimeCallback(dosetimes, affect!)
+
+prob = ODEProblem(SEIR_v!, initial_conditions, time, parameters)
+
+#Define the function to perform the global sensitivity analysis
+f1 = function (p)
+    
+  prob1 = remake(prob; p=p)
+    
+  sol = solve(prob1, RK4(), dt=0.001)
+    
+  [sol.t[argmax(sol[2,:])], maximum(sol[2,:]), sol[3, end]]
+    
+end
+```
+
+2. Perform the GSA
+
+```julia
+#Number of MC realisations
+N = 10^4
+
+#Lower and upper bounds for the parameters in the MC exploration
+lb = [1e-3, 1/3, 1/5, 1e-3, 0.01, 1e6]
+ub = [1e-1, 1/7, 1/25, 1, 0.04, 1e6]
+
+#Use the Sobol sampler
+sampler = SobolSample()
+
+#Create the MC matrices
+A,B = QuasiMonteCarlo.generate_design_matrices(N, lb, ub, sampler)
+
+#Perform the global sensitivity analysis with the Sobol method
+sobol_result = @time gsa(f1, Sobol(order=[0, 1, 2]), A, B);
+```
+
 ## Control strategies
 
 # Authors
