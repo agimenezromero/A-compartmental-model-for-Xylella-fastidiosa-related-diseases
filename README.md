@@ -330,3 +330,5 @@ end
 * Àlex Giménez-Romero
 
 # License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](https://github.com/agimenezromero/A-compartmental-model-for-Xylella-fastidiosa-related-diseases/blob/main/LICENSE) file for details
