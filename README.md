@@ -1,6 +1,6 @@
 # A compartmental model for *Xylella fastidiosa* diseases with explicit vector seasonal dynamics
 
-This repository contains the code and data used in the article "A compartmental model for *Xylella fastidiosa* diseases with explicit vector seasonal dynamics" published in 
+This repository contains the code and data used in the article "A compartmental model for *Xylella fastidiosa* diseases with explicit vector seasonal dynamics" published in [Phytopathology](https://apsjournals.apsnet.org/doi/10.1094/PHYTO-11-22-0428-V)
 
 Table of contents
 =================
